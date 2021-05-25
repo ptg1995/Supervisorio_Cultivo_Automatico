@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="PROJETO_ESTUFA_DBDataSet1" targetNamespace="http://tempuri.org/PROJETO_ESTUFA_DBDataSet1.xsd" xmlns:mstns="http://tempuri.org/PROJETO_ESTUFA_DBDataSet1.xsd" xmlns="http://tempuri.org/PROJETO_ESTUFA_DBDataSet1.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:msprop="urn:schemas-microsoft-com:xml-msprop" attributeFormDefault="qualified" elementFormDefault="qualified">
+  <xs:annotation>
+    <xs:appinfo source="urn:schemas-microsoft-com:xml-msdatasource">
+      <DataSource DefaultConnectionIndex="0" FunctionsComponentName="QueriesTableAdapter" Modifier="AutoLayout, AnsiClass, Class, Public" SchemaSerializationMode="IncludeSchema" xmlns="urn:schemas-microsoft-com:xml-msdatasource">
+        <Connections>
+          <Connection AppSettingsObjectName="Settings" AppSettingsPropertyName="PROJETO_ESTUFA_DBConnectionString" ConnectionStringObject="" IsAppSettingsProperty="true" Modifier="Assembly" Name="PROJETO_ESTUFA_DBConnectionString (Settings)" PropertyReference="ApplicationSettings.ESTUFA_AUTOMATIZADA_REV1.Properties.Settings.GlobalReference.Default.PROJETO_ESTUFA_DBConnectionString" Provider="System.Data.Odbc" />
+        </Connections>
+        <Tables>
+          <TableAdapter BaseClass="System.ComponentModel.Component" DataAccessorModifier="AutoLayout, AnsiClass, Class, Public" DataAccessorName="res_estufaTableAdapter" GeneratorDataComponentClassName="res_estufaTableAdapter" Name="res_estufa" UserDataComponentName="res_estufaTableAdapter">
+            <MainSource>
+              <DbSource ConnectionRef="PROJETO_ESTUFA_DBConnectionString (Settings)" DbObjectName="PROJETO_ESTUFA_DB.res_estufa" DbObjectType="Table" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="false" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="true" UserGetMethodName="GetData" UserSourceName="Fill">
+                <SelectCommand>
+                  <DbCommand CommandType="Text" ModifiedByUser="false">
+                    <CommandText>SELECT "umidade", "dth_criacao_reg" FROM "public"."res_estufa"</CommandText>
+                    <Parameters />
+                  </DbCommand>
+                </SelectCommand>
+              </DbSource>
+            </MainSource>
+            <Mappings>
+              <Mapping SourceColumn="umidade" DataSetColumn="umidade" />
+              <Mapping SourceColumn="dth_criacao_reg" DataSetColumn="dth_criacao_reg" />
+            </Mappings>
+            <Sources />
+          </TableAdapter>
+        </Tables>
+        <Sources />
+      </DataSource>
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:element name="PROJETO_ESTUFA_DBDataSet1" msdata:IsDataSet="true" msdata:UseCurrentLocale="true" msprop:EnableTableAdapterManager="True" msprop:Generator_DataSetName="PROJETO_ESTUFA_DBDataSet1" msprop:Generator_UserDSName="PROJETO_ESTUFA_DBDataSet1">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="res_estufa" msprop:Generator_TableClassName="res_estufaDataTable" msprop:Generator_TableVarName="tableres_estufa" msprop:Generator_TablePropName="res_estufa" msprop:Generator_RowDeletingName="res_estufaRowDeleting" msprop:Generator_RowChangingName="res_estufaRowChanging" msprop:Generator_RowEvHandlerName="res_estufaRowChangeEventHandler" msprop:Generator_RowDeletedName="res_estufaRowDeleted" msprop:Generator_UserTableName="res_estufa" msprop:Generator_RowChangedName="res_estufaRowChanged" msprop:Generator_RowEvArgName="res_estufaRowChangeEvent" msprop:Generator_RowClassName="res_estufaRow">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="umidade" msprop:Generator_ColumnVarNameInTable="columnumidade" msprop:Generator_ColumnPropNameInRow="umidade" msprop:Generator_ColumnPropNameInTable="umidadeColumn" msprop:Generator_UserColumnName="umidade" type="xs:int" minOccurs="0" />
+              <xs:element name="dth_criacao_reg" msprop:Generator_ColumnVarNameInTable="columndth_criacao_reg" msprop:Generator_ColumnPropNameInRow="dth_criacao_reg" msprop:Generator_ColumnPropNameInTable="dth_criacao_regColumn" msprop:Generator_UserColumnName="dth_criacao_reg" type="xs:dateTime" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
