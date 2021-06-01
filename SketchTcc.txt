@@ -1,0 +1,236 @@
+// DS3231 - Version: Latest 
+#include <DHT.h>
+#include <DHT_U.h>
+#include <Wire.h>
+#include "RTClib.h"
+
+ 
+// pino que estamos conectado
+#define DHTTYPE DHT11 // DHT 11
+#define pino_sensor_umidade A2
+#define pino_sensor_temperatura A0
+
+#define pino_rele_bomba_agua 28
+#define pino_rele_ventilador 32
+#define pino_rele_lampadas_aquecimento 22 
+#define pino_rele_lampadas_led 40
+
+RTC_DS1307 rtc;
+
+//sensores
+int umidadeSolo;
+float temperatura;
+int luminosidade;
+int umidadeSoloMap;
+String msgDadosVisualStd;
+DHT dht(pino_sensor_temperatura, DHTTYPE);
+
+// Variáveis de interface com Visual Studio
+String serialResponse = "";
+char sz[20];
+int sum = 0 ;
+char* TmoMinLuz;
+char* UmidadeMin;
+char* TempMax; 
+char* TempMin;
+char* LuminosidadeMax;
+char* LuminosidadeMin;
+
+//Controle
+long TmoMinLuzControl;
+long UmidadeMinControl;
+long TempMaxControl; 
+long TempMinControl;
+long LuminosidadeMaxControl;
+long LuminosidadeMinControl;
+int EstadoOperacao = 0;
+DateTime hora;
+//char diasDaSemana[7][12] = {"Domingo", "Segunda", "Terca", "Quarta", "Quinta", "Sexta", "Sabado"}; //Dias da semana
+
+void setup() {
+  Serial.begin(9600); // abre a porta serial, configura a taxa de transferência para 9600 bps
+  pinMode(pino_sensor_umidade, INPUT);
+  pinMode(pino_rele_bomba_agua, OUTPUT);
+  pinMode(pino_rele_lampadas_led, OUTPUT);
+  pinMode(pino_rele_ventilador, OUTPUT);
+  pinMode(pino_rele_lampadas_aquecimento, OUTPUT);
+  if (! rtc.begin()) {                         //Se o RTC nao for inicializado, faz
+    Serial.println("RTC NAO INICIALIZADO");    //Imprime o texto
+    while (1);                                 //Trava o programa
+  }
+  dht.begin();
+ //Wire.begin();
+ // rtc.adjust(DateTime(2021, 3, 11, 15, 50, 0));
+}
+
+void loop()
+{
+  hora = rtc.now();
+  if (Serial.available()) {
+     serialResponse = Serial.readStringUntil('\r\n');
+     if(serialResponse.length() > 4){
+      // Convert from String Object to String.
+      char buf[sizeof(sz)];
+      serialResponse.toCharArray(buf, sizeof(buf));
+      char *p = buf;
+      char *str;
+      while ((str = strtok_r(p, "|", &p)) != NULL)  
+        if(sum == 0) {UmidadeMin = str; UmidadeMinControl = atoi(UmidadeMin);sum++;}
+        else if(sum == 1) {TempMax = str;  TempMaxControl = atoi(TempMax) ;sum++;}
+        else if(sum == 2) {TempMin = str;  TempMinControl = atoi(TempMin) ;sum++;}
+        else if(sum == 3) {TmoMinLuz = str; TmoMinLuzControl = atoi(TmoMinLuz);sum = 0;} 
+     }
+      else if(serialResponse == "I"){
+        if(digitalRead(pino_rele_lampadas_led) == LOW){
+          digitalWrite(pino_rele_lampadas_led, HIGH);
+          luminosidade = 1; 
+          Serial.print("ION");
+        }   
+        else if(digitalRead(pino_rele_lampadas_led) == HIGH) {
+          digitalWrite(pino_rele_lampadas_led, LOW);
+          luminosidade = 0;
+          Serial.print("IOFF");
+        }
+      }
+      else if (serialResponse == "B"){
+        if(digitalRead(pino_rele_bomba_agua) == HIGH){
+          digitalWrite(pino_rele_bomba_agua, LOW);
+          Serial.print("BOFF");
+        }
+        else if(digitalRead(pino_rele_bomba_agua) == LOW) {
+          digitalWrite(pino_rele_bomba_agua, HIGH);
+          Serial.print("BON");
+        } 
+    }
+    else if (serialResponse == "V"){
+        if(digitalRead(pino_rele_ventilador) == HIGH){
+          digitalWrite(pino_rele_ventilador, LOW);
+          Serial.print("VOFF");
+        }
+        else if(digitalRead(pino_rele_ventilador) == LOW) {
+          digitalWrite(pino_rele_ventilador, HIGH);
+          Serial.print("VON");
+        } 
+    }
+    else if (serialResponse == "A"){
+        if(digitalRead(pino_rele_lampadas_aquecimento) == HIGH){
+          digitalWrite(pino_rele_lampadas_aquecimento, LOW);
+          Serial.print("AOFF");
+        }
+        else if(digitalRead(pino_rele_lampadas_aquecimento) == LOW) {
+          digitalWrite(pino_rele_lampadas_aquecimento, HIGH);
+          Serial.print("AON");
+        } 
+    }
+     else if (serialResponse == "Aut"){
+      EstadoOperacao = 1; 
+    }
+    else if (serialResponse == "Man"){
+      EstadoOperacao = 0; 
+      DesligaTudo();
+    }
+  }
+  if(TmoMinLuzControl > 0 & UmidadeMinControl > 0 & UmidadeMinControl > 0 & TempMinControl > 0){
+    //Serial.println("entrou na logica");
+    LerSensorUmidadeSolo();
+    delay(500);
+    LerSensorTemperatura();
+    delay(500);
+    ComparaAtivaBomba(umidadeSoloMap);
+    delay(500);
+    ComparaAtivaVentilador(temperatura);
+    delay(500);
+    ComparaAtivaLampadaAquecer(temperatura);
+    delay(500);
+    ControleDeLampadasLed(TmoMinLuzControl);
+    delay(500);
+    EnviaMsgDadosVisual(temperatura, umidadeSoloMap, luminosidade);  // Criar uma thread para envio
+    delay(2000);
+  }
+}
+
+///////////////////////////////////////////////////Funções de controle////////////////////////////////////////////
+void ComparaAtivaBomba(int SensorUmi){ 
+  if(EstadoOperacao > 0){
+    if(UmidadeMinControl > SensorUmi & UmidadeMinControl > 0){
+      digitalWrite(pino_rele_bomba_agua, HIGH);
+      Serial.print("BON");
+      delay(5000);
+      digitalWrite(pino_rele_bomba_agua, LOW);
+      Serial.print("BOFF");
+    }
+  }
+}
+void ComparaAtivaVentilador(int temp){
+  if(EstadoOperacao > 0){
+    if(temp > TempMaxControl & TempMaxControl > 0){
+      digitalWrite(pino_rele_ventilador, HIGH);   
+      Serial.print("VON");
+    }
+    else 
+    {
+      digitalWrite(pino_rele_ventilador, LOW);
+      Serial.print("VOFF");
+    }
+  }
+}
+void ComparaAtivaLampadaAquecer(int temp){
+  if(EstadoOperacao > 0){
+    if(temp < TempMinControl & TempMinControl > 0){
+      digitalWrite(pino_rele_lampadas_aquecimento, HIGH);
+      Serial.print("AON");
+    }
+    else {
+      digitalWrite(pino_rele_lampadas_aquecimento, LOW);
+      Serial.print("AOFF");
+    }
+  }
+}
+void ControleDeLampadasLed(long tmoMinLuz){
+  if(EstadoOperacao > 0){
+    if(hora.hour() >= tmoMinLuz ){
+      digitalWrite(pino_rele_lampadas_led, LOW);
+      luminosidade = 0;
+      Serial.print("IOFF");
+    } 
+    else
+    {
+      digitalWrite(pino_rele_lampadas_led, HIGH);
+      luminosidade = 1;
+      Serial.print("ION");
+    }
+  }
+}
+////////////////////////////////////////////////////////////Funções de leitura///////////////////////////////////
+void LerSensorUmidadeSolo(){
+ umidadeSolo = analogRead(pino_sensor_umidade);
+ umidadeSoloMap = map(umidadeSolo,537,271,0,100); //EXECUTA A FUNÇÃO "map" DE ACORDO COM OS PARÂMETROS
+ //Serial.println(umidadeSoloMap); 
+}
+void LerSensorTemperatura(){
+ temperatura =  (dht.readTemperature())*0.717 + 7,4723;
+// Serial.println(temperatura);
+}
+
+////////////////////////////////////////////////////////////Envio de dados////////////////////////////////////////
+void EnviaMsgDadosVisual(float temperatura, int umidade, int luminosidade){
+  String stringTwo = String(temperatura); 
+  String stringOne = String(umidade);
+  String stringThree = String(luminosidade);
+  String separador = ";";
+  msgDadosVisualStd = stringTwo+separador+stringOne+separador+stringThree;
+  Serial.print(msgDadosVisualStd);
+}
+
+void DesligaTudo(){
+  digitalWrite(pino_rele_lampadas_led, LOW);
+  digitalWrite(pino_rele_bomba_agua, LOW);
+  digitalWrite(pino_rele_lampadas_aquecimento, LOW);
+  digitalWrite(pino_rele_ventilador, LOW);
+}
+
+
+
+
+
+
